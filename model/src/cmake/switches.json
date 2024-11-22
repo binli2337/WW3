@@ -192,6 +192,10 @@
             {
                 "name": "FLD2",
                 "build_files": ["w3fld1md.F90", "w3fld2md.F90"]
+            },
+            {
+                "name": "FLD3",
+                "build_files": ["w3fld1md.F90", "w3fld3md.F90"]
             }
         ]
     },

@@ -521,6 +521,10 @@ CONTAINS
     USE W3FLD2MD, ONLY: W3FLD2
     USE W3GDATMD, ONLY: AALPHA
 #endif
+#ifdef W3_FLD3
+    USE W3FLD3MD, ONLY: W3FLD3
+    USE W3GDATMD, ONLY: AALPHA
+#endif
 #ifdef W3_FLX1
     USE W3FLX1MD
 #endif
@@ -2170,6 +2174,9 @@ CONTAINS
 #ifdef W3_FLD2
     CALL CALC_FPI(SPEC, CG1, FPI, VSIN )
 #endif
+#ifdef W3_FLD3
+    CALL CALC_FPI(SPEC, CG1, FPI, VSIN )
+#endif
     !
 #ifdef W3_FLD1
     IF (U10ABS.GT.10. .and. HSTOT.gt.0.5) then
@@ -2183,6 +2190,15 @@ CONTAINS
 #ifdef W3_FLD2
     IF (U10ABS.GT.10. .and. HSTOT.gt.0.5) then
       CALL W3FLD2 ( SPEC,min(FPI/TPI,2.0),COEF*U10ABS*COS(U10DIR),        &
+           COEF*U10ABS*Sin(U10DIR), ZWND, DEPTH, 0.0, &
+           DAIR, USTAR, USTDIR, Z0,TAUNUX,TAUNUY,CHARN)
+    ELSE
+      CHARN = AALPHA
+    ENDIF
+#endif
+#ifdef W3_FLD3
+    IF (U10ABS.GT.10. .and. HSTOT.gt.0.5) then
+      CALL W3FLD3 ( SPEC,min(FPI/TPI,2.0),COEF*U10ABS*COS(U10DIR),        &
            COEF*U10ABS*Sin(U10DIR), ZWND, DEPTH, 0.0, &
            DAIR, USTAR, USTDIR, Z0,TAUNUX,TAUNUY,CHARN)
     ELSE

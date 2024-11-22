@@ -739,6 +739,12 @@ module wav_shr_flags
   logical, parameter ::  w3_fld2_flag = .false.           !< @public a flag for "W3_FLD2"
 #endif
 
+#ifdef W3_FLD3
+  logical, parameter ::  w3_fld3_flag = .true.            !< @public a flag for "W3_FLD3"
+#else
+  logical, parameter ::  w3_fld3_flag = .false.           !< @public a flag for "W3_FLD3"
+#endif
+
 #ifdef W3_IG1
   logical, parameter ::  w3_ig1_flag = .true.             !< @public a flag for "W3_IG1"
 #else

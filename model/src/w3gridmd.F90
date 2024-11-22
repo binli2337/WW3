@@ -813,6 +813,10 @@ MODULE W3GRIDMD
   INTEGER                 :: TAILTYPE
   REAL                    :: TAILLEV, TAILT1, TAILT2
 #endif
+#ifdef W3_FLD3
+  INTEGER                 :: TAILTYPE
+  REAL                    :: TAILLEV, TAILT1, TAILT2
+#endif
 #ifdef W3_FLX3
   INTEGER                 :: CTYPE
   REAL                    :: CDMAX
@@ -944,6 +948,9 @@ MODULE W3GRIDMD
 #endif
 #ifdef W3_FLD2
   NAMELIST /FLD2/ TAILTYPE, TAILLEV, TAILT1, TAILT2
+#endif
+#ifdef W3_FLD3
+  NAMELIST /FLD3/ TAILTYPE, TAILLEV, TAILT1, TAILT2
 #endif
 #ifdef W3_FLX3
   NAMELIST /FLX3/ CDMAX, CTYPE
@@ -3117,6 +3124,12 @@ CONTAINS
     TAILT1 = 1.25
     TAILT2 = 3.00
 #endif
+#ifdef W3_FLD3
+    TAILTYPE = 0
+    TAILLEV  = 0.006
+    TAILT1 = 1.25
+    TAILT2 = 3.00
+#endif
     !
 #ifdef W3_FLD1
     CALL READNL ( NDSS, 'FLD1', STATUS )
@@ -3128,6 +3141,14 @@ CONTAINS
 #endif
 #ifdef W3_FLD2
     CALL READNL ( NDSS, 'FLD2', STATUS )
+    TAILLEV  = MIN( MAX ( 0.0005 , TAILLEV ), 0.04)
+    TAIL_LEV = TAILLEV
+    TAIL_ID = TAILTYPE
+    TAIL_TRAN1 = TAILT1
+    TAIL_TRAN2 = TAILT2
+#endif
+#ifdef W3_FLD3
+    CALL READNL ( NDSS, 'FLD3', STATUS )
     TAILLEV  = MIN( MAX ( 0.0005 , TAILLEV ), 0.04)
     TAIL_LEV = TAILLEV
     TAIL_ID = TAILTYPE
@@ -3380,6 +3401,9 @@ CONTAINS
       WRITE(NDSO,2987) TAIL_ID, TAIL_LEV, TAIL_TRAN1, TAIL_TRAN2
 #endif
 #ifdef W3_FLD2
+      WRITE(NDSO,2987) TAIL_ID, TAIL_LEV, TAIL_TRAN1, TAIL_TRAN2
+#endif
+#ifdef W3_FLD3
       WRITE(NDSO,2987) TAIL_ID, TAIL_LEV, TAIL_TRAN1, TAIL_TRAN2
 #endif
 #ifdef W3_RTD
@@ -7197,6 +7221,10 @@ CONTAINS
 #ifdef W3_FLD2
               CASE('FLD2')
                 READ (NDS,NML=FLD2,END=801,ERR=802,IOSTAT=J)
+#endif
+#ifdef W3_FLD3
+              CASE('FLD3')
+                READ (NDS,NML=FLD3,END=801,ERR=802,IOSTAT=J)
 #endif
 #ifdef W3_FLX3
               CASE('FLX3')

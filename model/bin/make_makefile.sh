@@ -339,6 +339,7 @@
          'W3IDATMD'     ) modtest=w3idatmd.o ;;
          'W3FLD1MD'     ) modtest=w3fld1md.o ;;
          'W3FLD2MD'     ) modtest=w3fld2md.o ;;
+         'W3FLD3MD'     ) modtest=w3fld3md.o ;;
          'W3IOGRMD'     ) modtest=w3iogrmd.o ;;
          'W3IOGOMD'     ) modtest=w3iogomd.o ;;
          'W3IOPOMD'     ) modtest=w3iopomd.o ;;

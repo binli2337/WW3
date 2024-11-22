@@ -104,7 +104,7 @@ check_switches()
       dstress) TY='upto1'
                ID='Diagnostic stress comp'
                TS='FLD'
-               OK='FLD0 FLD1 FLD2' ;;
+               OK='FLD0 FLD1 FLD2 FLD3' ;;
 #sort:s_ln:
       s_ln   ) TY='one'
                ID='linear input'
@@ -634,6 +634,8 @@ switch_files()
    FLD1) ds=$NULL
          dsx='w3fld1md' ;;
    FLD2) ds=$NULL
+         dsx='w3fld1md w3fld2md' ;;
+   FLD3) ds=$NULL
          dsx='w3fld1md w3fld2md' ;;
   esac
 

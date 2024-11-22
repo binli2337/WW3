@@ -1295,6 +1295,7 @@ CONTAINS
     !     ----------------------------------------------------------------
     !      W3FLD1    Subr. W3FLD1MD Corresponding source term.
     !      W3FLD2    Subr. W3FLD2MD Corresponding source term.
+    !      W3FLD3    Subr. W3FLD3MD Corresponding source term.
     !     ----------------------------------------------------------------
     !
     !  6. Error messages :

@@ -1543,6 +1543,14 @@ CONTAINS
            TAIL_ID, TAIL_LEV, TAIL_TRAN1, TAIL_TRAN2
     END IF
 #endif
+#ifdef W3_FLD3
+    IF ( WRITE ) THEN
+      WRITE (NDSM) TAIL_ID, TAIL_LEV, TAIL_TRAN1, TAIL_TRAN2
+    ELSE
+      READ (NDSM,END=801,ERR=802,IOSTAT=IERR) &
+           TAIL_ID, TAIL_LEV, TAIL_TRAN1, TAIL_TRAN2
+    END IF
+#endif
     !
     ! Interpolation tables ( fill locally ) ----------------------------- *
     !                                                      Module W3DISPMD
