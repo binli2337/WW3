@@ -1506,6 +1506,129 @@ CONTAINS
     !/ End of W3IORS ----------------------------------------------------- /
     !/
   END SUBROUTINE W3IORS
+
+  SUBROUTINE W3IORSN_READ(filename, ios, VA_pad, ICE_pad)
+    USE netcdf
+    USE W3GDATMD, ONLY: NX, NY, NK, NTH, MAPSTA, MAPST2
+    IMPLICIT NONE
+
+    CHARACTER(*), INTENT(IN) :: filename
+    INTEGER, INTENT(OUT)     :: ios
+
+    INTEGER :: fh, varid, d_nx, d_ny, d_time
+    INTEGER :: nx_file, ny_file, nt_file
+    INTEGER :: v_nk, v_nth, ncerr
+    INTEGER :: nv
+    INTEGER :: ndim, dimids(3), dimlen
+    INTEGER :: i, natts, var_type
+    CHARACTER(LEN=8) :: vname
+    REAL, ALLOCATABLE :: tmp3d(:,:,:)
+    REAL, POINTER, INTENT(OUT) :: VA_pad(:,:), ICE_pad(:)
+    REAL, TARGET, ALLOCATABLE :: VA_loc(:,:)
+    INTEGER, ALLOCATABLE :: tmp3d_int(:,:,:)
+    CHARACTER(LEN=NF90_MAX_NAME) :: vname_check
+
+    ios = 0
+
+    ncerr = nf90_open(TRIM(filename), NF90_NOWRITE, fh)
+    CALL nf90_err_check(ncerr, __LINE__)
+
+    ! Dimensions
+    ncerr = nf90_inq_dimid(fh, "nx", d_nx)
+    CALL nf90_err_check(ncerr, __LINE__)
+    ncerr = nf90_inquire_dimension(fh, d_nx, len=nx_file)
+    CALL nf90_err_check(ncerr, __LINE__)
+    ncerr = nf90_inq_dimid(fh, "ny", d_ny)
+    CALL nf90_err_check(ncerr, __LINE__)
+    ncerr = nf90_inquire_dimension(fh, d_ny, len=ny_file)
+    CALL nf90_err_check(ncerr, __LINE__)
+    ncerr = nf90_inq_dimid(fh, "time", d_time)
+    CALL nf90_err_check(ncerr, __LINE__)
+    ncerr = nf90_inquire_dimension(fh, d_time, len=nt_file)
+    CALL nf90_err_check(ncerr, __LINE__)
+
+    NX = nx_file
+    NY = ny_file
+    ALLOCATE(tmp3d(1, 1, NX))
+
+    ! Read NK and NTH
+    ncerr = nf90_inq_varid(fh, "nk", v_nk)
+    CALL nf90_err_check(ncerr, __LINE__)
+    ncerr = nf90_get_var(fh, v_nk, NK)
+    CALL nf90_err_check(ncerr, __LINE__)
+    ncerr = nf90_inq_varid(fh, "nth", v_nth)
+    CALL nf90_err_check(ncerr, __LINE__)
+    ncerr = nf90_get_var(fh, v_nth, NTH)
+    CALL nf90_err_check(ncerr, __LINE__)
+
+    ! Allocate VA
+    ALLOCATE(VA_loc(NK*NTH, NX*NY))
+    ! Read vaXXXX fields
+    IF (ALLOCATED(tmp3d)) DEALLOCATE(tmp3d)
+    ALLOCATE(tmp3d(NX,NY,1))
+
+    DO nv = 1, NK * NTH
+      WRITE(vname, '(A,I4.4)') 'va', nv
+
+      ! Get variable ID
+      ncerr = nf90_inq_varid(fh, TRIM(vname), varid)
+      CALL nf90_err_check(ncerr, __LINE__)
+
+      ! Get variable shape info
+      ncerr = nf90_inquire_variable(fh, varid, vname_check, var_type, ndim, dimids, natts)
+      CALL nf90_err_check(ncerr, __LINE__)
+
+      ! Read single time step of variable
+      ncerr = nf90_get_var(fh, varid, tmp3d, start=(/1,1,1/), count=(/NX,NY,1/))
+      CALL nf90_err_check(ncerr, __LINE__)
+      VA_loc(nv, :) = tmp3d(:,NY,1)
+    END DO
+
+    DEALLOCATE(tmp3d)
+    ! Pad VA with 1 extra column (VA(:, NX+1) = 0.0)
+    ALLOCATE(VA_pad(NK*NTH, NY*NX+1))
+    VA_pad(:, 1:NX) = VA_loc
+    VA_pad(:, NY*NX+1) = 0.0
+
+    ! Read MAPSTA and MAPST2
+    IF (.NOT. ASSOCIATED(MAPSTA)) ALLOCATE(MAPSTA(NY, NX))
+    IF (.NOT. ASSOCIATED(MAPST2)) ALLOCATE(MAPST2(NY, NX))
+    ncerr = nf90_inq_varid(fh, "mapsta", varid)
+    CALL nf90_err_check(ncerr, __LINE__)
+    ALLOCATE(tmp3d_int(NX,NY,1))
+    ncerr = nf90_get_var(fh, varid, tmp3d_int, start=(/1,1,1/), count=(/NX,NY,1/))
+    CALL nf90_err_check(ncerr, __LINE__)
+    MAPSTA(:,:) = RESHAPE(tmp3d_int(:,NY,1), SHAPE(MAPSTA))
+    MAPST2(:,:) = MAPSTA(:,:)
+    DEALLOCATE(tmp3d_int)
+
+    ! Read ICE
+    IF (.NOT. ASSOCIATED(ICE_pad)) ALLOCATE(ICE_pad(NX * NY))
+    ncerr = nf90_inq_varid(fh, "ice", varid)
+    CALL nf90_err_check(ncerr, __LINE__)
+    ALLOCATE(tmp3d(NX, NY, 1))
+    ncerr = nf90_get_var(fh, varid, tmp3d, start=(/1,1,1/), count=(/NX,NY,1/))
+    CALL nf90_err_check(ncerr, __LINE__)
+    ICE_pad(:) = tmp3d(:,NY,1)
+    DEALLOCATE(tmp3d)
+
+    ! Close file
+    ncerr = nf90_close(fh)
+    CALL nf90_err_check(ncerr, __LINE__)
+
+  CONTAINS
+
+    SUBROUTINE nf90_err_check(status, line)
+      INTEGER, INTENT(IN) :: status, line
+      IF (status /= NF90_NOERR) THEN
+        PRINT *, 'NetCDF error at line', line, ': ', TRIM(nf90_strerror(status))
+        ios = status
+        STOP
+      END IF
+    END SUBROUTINE nf90_err_check
+
+  END SUBROUTINE W3IORSN_READ
+
   !/
   !/ End of module W3IORSMD -------------------------------------------- /
   !/

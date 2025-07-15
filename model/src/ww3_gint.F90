@@ -117,7 +117,7 @@ PROGRAM W3GRID_INTERP
   USE W3ODATMD, ONLY : W3NOUT, W3SETO
   USE W3IDATMD
   USE W3WDATMD, ONLY : W3NDAT, W3DIMW, W3SETW
-  USE W3WDATMD, ONLY : WDATAS, TIME, WLV, ICE, ICEH, ICEF,               &
+  USE W3WDATMD, ONLY : WDATAS, TIME, WLV, ICEH, ICEF,               &
        UST, USTDIR, ASF, RHOAIR
   USE W3SERVMD, ONLY : ITRACE, NEXTLN, EXTCDE
 #ifdef W3_S
@@ -126,8 +126,9 @@ PROGRAM W3GRID_INTERP
   USE W3ARRYMD, ONLY : PRTBLK
   USE W3GSRUMD
   USE W3TRIAMD
-  USE W3WDATMD, ONLY: VA
-  USE W3IORSMD, ONLY: W3IORS
+  USE W3WDATMD, ONLY: ICE, VA
+  USE W3IORSMD, ONLY: W3IORS, W3IORSN_READ
+  !USE W3IORSMDOLD, ONLY: W3IORSOLD
   !/
   IMPLICIT NONE
   !/
@@ -178,6 +179,9 @@ PROGRAM W3GRID_INTERP
   INTEGER                 :: iNOINT,iNOINT2,JSEA,iloops 
   CHARACTER(LEN=8)        :: WORDS(5)
   CHARACTER(LEN=80)       :: LINEIN
+  CHARACTER(LEN=128) :: filename
+  INTEGER :: ios
+  REAL, POINTER :: VA_tmp(:,:), ICE_tmp(:)
   !
   !---------------------------------------------------------------------------
   ! 1. Initialization
@@ -910,10 +914,16 @@ PROGRAM W3GRID_INTERP
       CALL W3DIMI(IG, 6, 6)
 #endif
       NSEAL=NSEA ! Set for reading restarts 
-
+      WRITE(filename,'(I8.8,".",I6.6,".restart.ww3.nc")') TOUT(1), TOUT(2)
+      CALL W3IORSN_READ(filename, ios, VA_tmp, ICE_tmp)
+      IF (ios /= 0) CALL EXTCDE(99, msg="Restart read failed for grid "//TRIM(GNAME))
+      WDATAS(IG)%VA     => VA_tmp
+      WDATAS(IG)%ICE     => ICE_tmp
+      GRIDS(IG)%MAPST2(:,:) = 0
+     
       !To use an older model version restart file (add a w3iorsold)
       !CALL W3IORSOLD ( 'READ', 56, XXX, INTYPE, IG )
-      CALL W3IORS ( 'READ', 56, XXX, IG )
+      !CALL W3IORS ( 'READ', 56, XXX, IG )
     END DO
 
     ! 5.d Carry out interpolation
@@ -926,9 +936,8 @@ PROGRAM W3GRID_INTERP
     INPUTS(NG)%INFLAGS1(3)=.TRUE.
     CALL W3DIMI(NG, 6, 6)
 #endif
-
+    
     CALL W3EXGI ( NG-1, NSEA, NOSWLL_MIN, INTMETHOD, OUTorREST,MAPSTA_NG,MAPST2_NG )
-
     GOTO 2222
 
   END IF !OUTorREST
@@ -2549,7 +2558,6 @@ CONTAINS
                   END IF
                 END DO
               END IF
-              !
               ! End of loop through the points per grid to obtain interpolated values
             END DO   !/ IPTS = 1, ...
             !
@@ -3420,8 +3428,7 @@ CONTAINS
                   END IF
                 END IF
               END DO
-            ENDIF 
-            !
+            END IF
           END IF !/ ( USEGRID(IG) )
           !
           ! End of Second loop
